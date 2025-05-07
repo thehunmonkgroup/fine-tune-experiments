@@ -175,5 +175,5 @@ text_generation_pipe = pipeline(task = "text-generation",
                                 model = llama_model,
                                 tokenizer = llama_tokenizer,
                                 max_length = 300)
-generation_result = text_generation_pipe(prompt)
+generation_result = text_generation_pipe(f"<s>[INST] {user_prompt} [/INST]")
 print(generation_result[0]["generated_text"])
