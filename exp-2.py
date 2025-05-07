@@ -22,7 +22,6 @@ print(f"bitsandbytes version: {bitsandbytes.__version__}")
 
 model_identifier = "NousResearch/Llama-2-7b-chat-hf"
 formatted_dataset = "aboonaji/wiki_medical_terms_llam2_format"
-source_dataset = "gamino/wiki_medical_terms"
 
 # Step 3: Setting up all the QLoRA hyperparameters for fine-tuning
 
@@ -60,7 +59,7 @@ log_interval = 25
 
 # Step 6: Setting up all the supervised fine-tuning arguments hyperparameters for fine-tuning
 
-enable_packing = False
+enable_packing = True
 sequence_length_max = 512 # Good to specifiy this so you don't run out of GPU VRAM
 device_assignment = {"": 0}
 
@@ -77,7 +76,7 @@ bnb_setup = BitsAndBytesConfig(load_in_4bit = enable_4bit,
                                bnb_4bit_use_double_quant = double_quant_flag,
                                bnb_4bit_compute_dtype = dtype_computation)
 
-# Step 9a: Loading the pre-trained LLaMA 3.1 model
+# Step 9: Loading the pre-trained LLaMA 2 model
 
 llama_model = AutoModelForCausalLM.from_pretrained(model_identifier,
                                                    quantization_config = bnb_setup,
@@ -85,7 +84,8 @@ llama_model = AutoModelForCausalLM.from_pretrained(model_identifier,
 llama_model.config.use_case = False
 llama_model.config.pretraining_tp = 1
 
-# Step 9b: Chatting with the pre-trained model
+# Step 10: Chatting with the pre-trained model
+
 
 if hasattr(llama_model, "peft_config"):
     print(f"Model already has default PEFT configuration: {llama_model.peft_config}")
@@ -104,12 +104,6 @@ text_generation_pipe = pipeline(task = "text-generation",
                                 max_length = 300)
 generation_result = text_generation_pipe(f"<s>[INST] {user_prompt} [/INST]")
 print(generation_result[0]["generated_text"])
-
-# Step 10: Loading the pre-trained tokenizer for the LLaMA 3.1 model
-
-llama_tokenizer = AutoTokenizer.from_pretrained(model_identifier, trust_remote_code = True, )
-llama_tokenizer.pad_token = llama_tokenizer.eos_token
-llama_tokenizer.padding_side = "right"
 
 # Step 11: Setting up the configuration for the LoRA fine-tuning method
 
@@ -163,7 +157,6 @@ llama_sftt_trainer = SFTTrainer(model = llama_model,
 
 llama_model.config.use_cache = False       # free key/value cache
 llama_model.gradient_checkpointing_enable()  # discard activations
-train_args.gradient_checkpointing = True
 
 llama_sftt_trainer.train()
 
