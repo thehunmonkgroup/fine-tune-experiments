@@ -150,7 +150,7 @@ train_args = SFTConfig(output_dir = results_dir, # Changed from TrainingArgument
 llama_sftt_trainer = SFTTrainer(model = llama_model,
                                 args = train_args,
                                 train_dataset = training_data,
-                                processing_class=llama_tokenizer  # Changed from tokenizer
+                                processing_class=my_tokenizer  # Changed from tokenizer
                                 )
 
 # Step 14: Training the model
@@ -166,7 +166,7 @@ user_prompt = "What is Paracetamol poisoning? List its most common symptoms."
 
 text_generation_pipe = pipeline(task = "text-generation",
                                 model = llama_model,
-                                tokenizer = llama_tokenizer,
+                                tokenizer = my_tokenizer,
                                 max_length = 300)
 generation_result = text_generation_pipe(f"<s>[INST] {user_prompt} [/INST]")
 print(generation_result[0]["generated_text"])
