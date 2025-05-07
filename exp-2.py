@@ -20,8 +20,9 @@ print(f"bitsandbytes version: {bitsandbytes.__version__}")
 
 # Step 2: Setting up links to Hugging Face datasets and models
 
-model_identifier = "meta-llama/Llama-3.1-8B"
-source_dataset = "training_data.jsonl"
+model_identifier = "NousResearch/Llama-2-7b-chat-hf"
+formatted_dataset = "aboonaji/wiki_medical_terms_llam2_format"
+source_dataset = "gamino/wiki_medical_terms"
 
 # Step 3: Setting up all the QLoRA hyperparameters for fine-tuning
 
@@ -65,7 +66,7 @@ device_assignment = {"": 0}
 
 # Step 7: Loading the dataset
 
-training_data = load_dataset("json", data_files="training_data.jsonl", split = "train")
+training_data = load_dataset(formatted_dataset, split = "train")
 
 
 # Step 8: Defining the QLoRA configuration
@@ -91,7 +92,7 @@ if hasattr(llama_model, "peft_config"):
 
 print(llama_model.is_loaded_in_4bit)  # should be True
 
-user_prompt = "Why is the sky blue?"
+user_prompt = "What is Paracetamol poisoning? List its most common symptoms."
 
 my_tokenizer = AutoTokenizer.from_pretrained(model_identifier, trust_remote_code = True, )
 my_tokenizer.pad_token = my_tokenizer.eos_token
@@ -100,16 +101,8 @@ my_tokenizer.padding_side = "right"
 text_generation_pipe = pipeline(task = "text-generation",
                                 model = llama_model,
                                 tokenizer = my_tokenizer,
-                                max_length = 800)
-prompt = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
-
-Cutting Knowledge Date: December 2023
-Today Date: 23 July 2024
-
-You are a helpful assistant<|eot_id|><|start_header_id|>user<|end_header_id|>
-
-{user_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
-generation_result = text_generation_pipe(prompt)
+                                max_length = 300)
+generation_result = text_generation_pipe(f"<s>[INST] {user_prompt} [/INST]")
 print(generation_result[0]["generated_text"])
 
 # Step 10: Loading the pre-trained tokenizer for the LLaMA 3.1 model
