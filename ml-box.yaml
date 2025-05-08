@@ -1,0 +1,17 @@
+# Pod.
+pod_name: ml-box-gpu
+template_id: vr0ph9jmkq
+image_name: runpod/pytorch:2.8.0-py3.11-cuda12.8.1-cudnn-devel-ubuntu22.04
+gpu_types:
+  - NVIDIA A40
+cloud_type: SECURE
+start_ssh: false
+gpu_count: 1
+container_disk_in_gb: 20
+network_volume_id: usdplgztw8
+volume_mount_path: /workspace
+docker_args: "/workspace/startup-script.sh docker"
+
+# Retry.
+create_gpu_retries: 1
+create_retry_wait_seconds: 10
