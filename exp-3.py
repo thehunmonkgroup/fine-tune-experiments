@@ -5,6 +5,7 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Use GPU with index 0
 import torch
+from huggingface_hub import login
 from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset
 from peft import LoraConfig, PeftModel, get_peft_model
@@ -18,10 +19,13 @@ print(f"trl version: {trl.__version__}")
 print(f"triton version: {triton.__version__}")
 print(f"bitsandbytes version: {bitsandbytes.__version__}")
 
+login()
+
 # Step 2: Setting up links to Hugging Face datasets and models
 
-model_identifier = "meta-llama/Llama-3.1-8B"
+model_identifier = "meta-llama/Llama-3.1-8B-Instruct"
 source_dataset = "training_data.jsonl"
+
 
 # Step 3: Setting up all the QLoRA hyperparameters for fine-tuning
 
@@ -94,7 +98,7 @@ chat = [
     {"role": "user", "content": "Why is the sky blue?"}
 ]
 
-my_tokenizer = AutoTokenizer.from_pretrained(model_identifier, trust_remote_code = True, )
+my_tokenizer = AutoTokenizer.from_pretrained(model_identifier, use_fast=True, trust_remote_code = True, )
 my_tokenizer.padding_side = "left"
 
 # Add a real PAD if none exists
