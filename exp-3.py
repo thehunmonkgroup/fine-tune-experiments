@@ -39,7 +39,7 @@ double_quant_flag = True
 # Step 5: Setting up all the training arguments hyperparameters for fine-tuning
 
 results_dir = "./results"
-epochs_count = 10
+epochs_count = 3
 enable_fp16 = False
 enable_bf16 = False
 train_batch_size = 4
@@ -51,7 +51,6 @@ train_learning_rate = 2e-4
 decay_rate = 0.001
 optimizer_type = "paged_adamw_32bit"
 scheduler_type = "cosine"
-steps_limit = 100
 warmup_percentage = 0.03
 length_grouping = True
 checkpoint_interval = 0
@@ -59,14 +58,13 @@ log_interval = 25
 
 # Step 6: Setting up all the supervised fine-tuning arguments hyperparameters for fine-tuning
 
-enable_packing = False
+enable_packing = True
 sequence_length_max = 512 # Good to specifiy this so you don't run out of GPU VRAM
-device_assignment = {"": 0}
+device_map = "auto"
 
 # Step 7: Loading the dataset
 
-training_data = load_dataset("json", data_files="training_data.jsonl", split = "train")
-
+dataset = load_dataset("json", data_files=source_dataset, split = "train")
 
 # Step 8: Defining the QLoRA configuration
 
@@ -76,49 +74,61 @@ bnb_setup = BitsAndBytesConfig(load_in_4bit = enable_4bit,
                                bnb_4bit_use_double_quant = double_quant_flag,
                                bnb_4bit_compute_dtype = dtype_computation)
 
-# Step 9a: Loading the pre-trained LLaMA 3.1 model
+# Step 9: Loading the pre-trained LLaMA 3.1 model
 
 llama_model = AutoModelForCausalLM.from_pretrained(model_identifier,
                                                    quantization_config = bnb_setup,
-                                                   device_map = device_assignment)
+                                                   device_map = device_map)
 llama_model.config.use_case = False
 llama_model.config.pretraining_tp = 1
 
-# Step 9b: Chatting with the pre-trained model
+# Step 10: Chatting with the pre-trained model
 
 if hasattr(llama_model, "peft_config"):
     print(f"Model already has default PEFT configuration: {llama_model.peft_config}")
 
 print(llama_model.is_loaded_in_4bit)  # should be True
 
-user_prompt = "Why is the sky blue?"
+chat = [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Why is the sky blue?"}
+]
 
 my_tokenizer = AutoTokenizer.from_pretrained(model_identifier, trust_remote_code = True, )
-my_tokenizer.pad_token = my_tokenizer.eos_token
-my_tokenizer.padding_side = "right"
+my_tokenizer.padding_side = "left"
 
-text_generation_pipe = pipeline(task = "text-generation",
-                                model = llama_model,
-                                tokenizer = my_tokenizer,
-                                max_length = 800)
-prompt = """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+# Add a real PAD if none exists
+if my_tokenizer.pad_token is None:
+    my_tokenizer.add_special_tokens({"pad_token": "<pad>"})  # or "<|finetune_right_pad_id|>"
+    pad_id = my_tokenizer.pad_token_id
+    llama_model.resize_token_embeddings(len(my_tokenizer))
+    llama_model.config.pad_token_id = pad_id
 
-Cutting Knowledge Date: December 2023
-Today Date: 23 July 2024
+prompt_str = my_tokenizer.apply_chat_template(
+    chat,
+    tokenize=False,
+    add_generation_prompt=True          # <|start_header_id|>assistant … tag
+)
 
-You are a helpful assistant<|eot_id|><|start_header_id|>user<|end_header_id|>
+inputs = my_tokenizer(prompt_str, return_tensors="pt").to(llama_model.device)
+outputs = llama_model.generate(**inputs, max_new_tokens=800, do_sample=True)
+print(my_tokenizer.decode(outputs[0], skip_special_tokens=True))
 
-{user_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>"""
-generation_result = text_generation_pipe(prompt)
-print(generation_result[0]["generated_text"])
+# Step 11: Preparing the dataset
 
-# Step 10: Loading the pre-trained tokenizer for the LLaMA 3.1 model
+def row_to_text(example: dict[str, str]):
+    chat = [
+        {"role": "user",   "content": example["user"]},
+        {"role": "assistant", "content": example["assistant"]}
+    ]
+    example["text"] = my_tokenizer.apply_chat_template(
+        chat, tokenize=False, add_generation_prompt=False
+    )
+    return {"text": example["text"]}
 
-llama_tokenizer = AutoTokenizer.from_pretrained(model_identifier, trust_remote_code = True, )
-llama_tokenizer.pad_token = llama_tokenizer.eos_token
-llama_tokenizer.padding_side = "right"
+training_data = dataset.map(row_to_text, remove_columns=dataset.column_names)
 
-# Step 11: Setting up the configuration for the LoRA fine-tuning method
+# Step 12: Setting up the configuration for the LoRA fine-tuning method
 
 peft_setup = LoraConfig(lora_alpha = lora_hyper_alpha,
                         lora_dropout = lora_hyper_dropout,
@@ -126,16 +136,16 @@ peft_setup = LoraConfig(lora_alpha = lora_hyper_alpha,
                         bias = "none",
                         task_type = "CAUSAL_LM",
                         inference_mode=False,
-                        target_modules=["q_proj","v_proj"] # for efficient GPU VRAM usage
+                        target_modules=["q_proj","v_proj", "k_proj","o_proj","gate_proj","up_proj","down_proj"] # for efficient GPU VRAM usage
                         )
 
 llama_model.enable_input_require_grads() # A quirk of LoRA + gradient checkpointing
 
 llama_model = get_peft_model(llama_model, peft_setup) # instead of including it with SFTTrainer
 
-# Step 12: Creating a training configuration by setting the training parameters
+# Step 13: Creating a training configuration by setting the training parameters
 
-train_args = SFTConfig(output_dir = results_dir, # Changed from TrainingArguments
+train_args = SFTConfig(output_dir = results_dir,
                                num_train_epochs = epochs_count,
                                per_device_train_batch_size = train_batch_size,
                                per_device_eval_batch_size = eval_batch_size,
@@ -148,39 +158,32 @@ train_args = SFTConfig(output_dir = results_dir, # Changed from TrainingArgument
                                fp16 = enable_fp16,
                                bf16 = enable_bf16,
                                max_grad_norm = grad_norm_limit,
-                               max_steps = steps_limit,
                                warmup_ratio = warmup_percentage,
                                group_by_length = length_grouping,
                                lr_scheduler_type = scheduler_type,
                                gradient_checkpointing = checkpointing_flag,
-                               dataset_text_field = "text", # Moved from SFTTrainer
-                               max_seq_length = sequence_length_max, # Moved from SFTTrainer, changed from "max_length"
+                               dataset_text_field = "text",
+                               max_seq_length = sequence_length_max,
                                packing = enable_packing,
                                )
 
-# Step 13: Creating the Supervised Fine-Tuning Trainer
+# Step 14: Creating the Supervised Fine-Tuning Trainer
 
 llama_sftt_trainer = SFTTrainer(model = llama_model,
                                 args = train_args,
                                 train_dataset = training_data,
-                                processing_class=llama_tokenizer  # Changed from tokenizer
+                                processing_class=my_tokenizer
                                 )
 
-# Step 14: Training the model
+# Step 15: Training the model
 
 llama_model.config.use_cache = False       # free key/value cache
 llama_model.gradient_checkpointing_enable()  # discard activations
-train_args.gradient_checkpointing = True
 
 llama_sftt_trainer.train()
 
-# Step 15: Chatting with the fine-tuned model
+# Step 16: Chatting with the fine-tuned model
 
-user_prompt = "What is Paracetamol poisoning? List its most common symptoms."
-
-text_generation_pipe = pipeline(task = "text-generation",
-                                model = llama_model,
-                                tokenizer = llama_tokenizer,
-                                max_length = 300)
-generation_result = text_generation_pipe(prompt)
-print(generation_result[0]["generated_text"])
+inputs = my_tokenizer(prompt_str, return_tensors="pt").to(llama_model.device)
+outputs = llama_model.generate(**inputs, max_new_tokens=800, do_sample=True)
+print(my_tokenizer.decode(outputs[0], skip_special_tokens=True))
