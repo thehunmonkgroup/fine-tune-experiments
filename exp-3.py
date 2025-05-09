@@ -48,22 +48,22 @@ enable_fp16 = False
 enable_bf16 = False
 train_batch_size = 4
 eval_batch_size = 4
-accumulation_steps = 1
+accumulation_steps = 4
 checkpointing_flag = True
-grad_norm_limit = 0.3
+grad_norm_limit = 0.7
 train_learning_rate = 2e-4
 decay_rate = 0.001
 optimizer_type = "paged_adamw_32bit"
 scheduler_type = "cosine"
 warmup_percentage = 0.03
-length_grouping = True
+length_grouping = False
 checkpoint_interval = 0
 log_interval = 25
 
 # Step 6: Setting up all the supervised fine-tuning arguments hyperparameters for fine-tuning
 
 enable_packing = True
-sequence_length_max = 512 # Good to specifiy this so you don't run out of GPU VRAM
+sequence_length_max = 1024 # Good to specifiy this so you don't run out of GPU VRAM
 device_map = "auto"
 
 # Step 7: Loading the dataset
