@@ -30,7 +30,7 @@ source_dataset = "training_data.jsonl"
 # Step 3: Setting up all the QLoRA hyperparameters for fine-tuning
 
 lora_hyper_r = 256
-lora_hyper_alpha = 128
+lora_hyper_alpha = 256
 lora_hyper_dropout = 0.1
 
 # Step 4: Setting up all the bitsandbytes hyperparameters for fine-tuning
@@ -50,7 +50,7 @@ train_batch_size = 4
 eval_batch_size = 4
 accumulation_steps = 1
 checkpointing_flag = True
-grad_norm_limit = 0.7
+grad_norm_limit = 0.3
 train_learning_rate = 2e-4
 decay_rate = 0.001
 optimizer_type = "paged_adamw_32bit"
