@@ -135,6 +135,9 @@ pip install -U \
   gcsfs \
   huggingface_hub \
   peft \
+  prompt-toolkit>=3 \
+  pyyaml \
+  torch \
   transformers \
   triton==3.2.0 \
   trl
