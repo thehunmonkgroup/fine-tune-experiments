@@ -58,7 +58,7 @@ scheduler_type = "cosine"
 warmup_percentage = 0.03
 length_grouping = False
 checkpoint_interval = 0
-log_interval = 25
+log_interval = 1
 
 # Step 6: Setting up all the supervised fine-tuning arguments hyperparameters for fine-tuning
 
