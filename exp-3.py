@@ -29,8 +29,8 @@ source_dataset = "training_data.jsonl"
 
 # Step 3: Setting up all the QLoRA hyperparameters for fine-tuning
 
-lora_hyper_r = 64
-lora_hyper_alpha = 16
+lora_hyper_r = 256
+lora_hyper_alpha = 128
 lora_hyper_dropout = 0.1
 
 # Step 4: Setting up all the bitsandbytes hyperparameters for fine-tuning
