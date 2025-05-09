@@ -114,9 +114,9 @@ prompt_str = my_tokenizer.apply_chat_template(
     add_generation_prompt=True          # <|start_header_id|>assistant … tag
 )
 
-inputs = my_tokenizer(prompt_str, return_tensors="pt").to(llama_model.device)
-outputs = llama_model.generate(**inputs, max_new_tokens=800, do_sample=True)
-print(my_tokenizer.decode(outputs[0], skip_special_tokens=True))
+# inputs = my_tokenizer(prompt_str, return_tensors="pt").to(llama_model.device)
+# outputs = llama_model.generate(**inputs, max_new_tokens=800, do_sample=True)
+# print(my_tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 # Step 11: Preparing the dataset
 
