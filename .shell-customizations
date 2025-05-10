@@ -1,0 +1,41 @@
+# XDG on the network volume preserves essential config, data, caches.
+export XDG_CONFIG_HOME=/workspace/.xdg/config
+export XDG_DATA_HOME=/workspace/.xdg/data
+export XDG_CACHE_HOME=/workspace/.xdg/cache
+export XDG_STATE_HOME=/workspace/.xdg/state
+# Set Hugging Face cache directory
+export HF_HOME=/workspace/.xdg/cache/huggingface
+# Go.
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin:/usr/lib/go-1.23/bin
+export GIT_SSH_COMMAND="ssh -i /tmp/.ssh/id_rsa"
+
+# Editor
+EDITOR="$(command -v nvim)"
+if [ -z "${EDITOR}" ]; then
+  EDITOR="$(command -v vim)"
+fi
+
+###############################################################################
+# ENVIRONMENT VARIABLES
+###############################################################################
+export TERM=xterm-256color
+export EDITOR="${EDITOR}"
+export LSCOLORS=exfxcxdxbxegedabagacad;
+export CLICOLOR=1
+
+# Add env vars.
+if [ -r /workspace/.env ]; then
+  source /workspace/.env
+fi
+
+v() {
+  ${EDITOR} "$@"
+}
+
+# Start tmux
+if [ -z "$TMUX" ]; then
+  tmux attach-session -t mlbox || tmux new-session -s mlbox
+fi
+
+# vi: ft=sh

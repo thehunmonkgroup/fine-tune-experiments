@@ -37,11 +37,6 @@ mkdir -pv /tmp/.ssh
 cp -v /workspace/.ssh/id_rsa /tmp/.ssh/id_rsa
 chmod -v 600 /tmp/.ssh/id_rsa
 
-# Add env vars.
-if [ -r /workspace/.env ]; then
-  source /workspace/.env
-fi
-
 # XDG storage
 mkdir -pv /workspace/.xdg/{config,data,cache,state}
 
@@ -51,38 +46,8 @@ if ! grep -q "CUSTOMIZATIONS" ~/.bashrc; then
   cat >> ~/.bashrc << 'EOF'
 
 # CUSTOMIZATIONS
-# These should be uncommented when building or updating the network volume storage.
-export XDG_CONFIG_HOME=/workspace/.xdg/config
-export XDG_DATA_HOME=/workspace/.xdg/data
-export XDG_CACHE_HOME=/workspace/.xdg/cache
-export XDG_STATE_HOME=/workspace/.xdg/state
-# Set Hugging Face cache directory
-export HF_HOME=/workspace/.xdg/cache/huggingface
-# Go.
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin:/usr/lib/go-1.23/bin
-export GIT_SSH_COMMAND="ssh -i /tmp/.ssh/id_rsa"
-
-EDITOR="$(command -v nvim)"
-if [ -z "${EDITOR}" ]; then
-  EDITOR="$(command -v vim)"
-fi
-
-###############################################################################
-# ENVIRONMENT VARIABLES
-###############################################################################
-export TERM=xterm-256color
-export EDITOR="${EDITOR}"
-export LSCOLORS=exfxcxdxbxegedabagacad;
-export CLICOLOR=1
-
-v() {
-  ${EDITOR} "$@"
-}
-
-# Start tmux
-if [ -z "$TMUX" ]; then
-  tmux attach-session -t mlbox || tmux new-session -s mlbox
+if [ -r /workspace/.shell-customizations ]; then
+  source /workspace/.shell-customizations
 fi
 EOF
 fi
