@@ -32,10 +32,15 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAxP5jcpfSLiS6+AbdvRCFxtBFz3tiy4fjEVxdIc
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDdtaFtjR25oiTPK0tZ7YaeaqghNPk/yAhExR6csldRapuqvmVqkuZlF/V/D+FTeyBH5ixvM0JWSMaBtsNPis32v6tQtQIEqmgvoz/7eESNOigbBE2184Vz2Gxn+xk7QK50wTtm8TPz62mUqelIhM/LfJfXWuhc5Qvcw86rZkVtwGycJLzpGwkTCS58yKlxiYSQW91+50WrY6c4JVz/KhRIuuPghydr2ZohQ4rpWFAFJMpvqhgHR7bn6n1XCutcwRvWdX+Gg2/XZ2kuNG5sHd2zskYopLs1xrL6Dg0ZC7nd05IKuAS2PolA2xCbJxFkMpXTYsZ9V9x+I4oe3NDlQdD59xiwGifbc/Dbyo4OehO1FlGnUO4N+0Ry/2TczqkLTDJW/bSkxaNrId+ZkSl+S4LMXSASssqBCjrXutVpx6QStPdTJ3vnnIciveXbdYeY8gG2iYnfSjlseHHMNdQ4VB/hXvddYGV5reI0NXqW/Mzl/8ETJbM9iqOglSFVwyMHQ+FNT0Bwtc9ZtlUzAnS6ow0WXUR79Ebws89UXr+HTdYxinfrcmdS9M8v015OC8yFzVCOOCghwpbrLsYzdyBf2aGHuXZn+4H8sQ9duOj0V7nxOC8aEhFH8lmupPzi+HTOumC5xy0QxD3Wzt3PFtp27ERhFEOwNRGLvp11lNZO3DZyhQ== adamgabriel@new-host-4.home" >> ~/.ssh/authorized_keys
 chmod -v 600 ~/.ssh/authorized_keys
 
-# Set commit SSH private key
+# Set SSH private key location.
 mkdir -pv /tmp/.ssh
 cp -v /workspace/.ssh/id_rsa /tmp/.ssh/id_rsa
 chmod -v 600 /tmp/.ssh/id_rsa
+
+# Add env vars.
+if [ -r /workspace/.env ]; then
+  source /workspace/.env
+fi
 
 # XDG storage
 mkdir -pv /workspace/.xdg/{config,data,cache,state}
