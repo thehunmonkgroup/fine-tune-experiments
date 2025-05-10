@@ -141,7 +141,10 @@ pip install -U \
   huggingface_hub \
   peft \
   prompt-toolkit>=3 \
+  protobuf \
   pyyaml \
+  sentencepiece \
+  tenacity \
   torch \
   transformers \
   triton==3.2.0 \
