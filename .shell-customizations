@@ -29,8 +29,26 @@ if [ -r /workspace/.env ]; then
   source /workspace/.env
 fi
 
+###############################################################################
+# ALIASES
+###############################################################################
+alias ls="ls -F --color=auto"
+alias a="ls -alh -F --color=auto"
+alias l="ls -alh -F --color=always | less -R"
+#grep alias
+alias cgrep="grep -n --colour=auto"
+# Navigation aliases.
+alias cl="clear"
+alias cdl="cd; clear; title bash 2> /dev/null"
+
 v() {
   ${EDITOR} "$@"
+}
+
+f() {
+  default_newlines=100
+  newlines=${1:-$default_newlines}
+  yes "" | head -n "${newlines}"
 }
 
 # Start tmux
