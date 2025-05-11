@@ -102,6 +102,7 @@ pip install -U \
   bitsandbytes \
   datasets \
   fsspec \
+  flash-attn \
   gcsfs \
   huggingface_hub \
   peft \
