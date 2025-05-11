@@ -102,7 +102,7 @@ pip install -U \
   bitsandbytes \
   datasets \
   fsspec \
-  flash-attn \
+  ninja \
   gcsfs \
   huggingface_hub \
   peft \
